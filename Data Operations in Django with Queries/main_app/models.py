@@ -82,3 +82,67 @@ class Task(models.Model):
     is_finished = models.BooleanField(
         default=False
     )
+
+    def __str__(self):
+        return f"Task - {self.title} needs to be done until {self.due_date}!"
+
+
+class HotelRoom(models.Model):
+    ROOM_TYPE_CHOICES = (
+        ('Standard', 'Standard'),
+        ('Deluxe', 'Deluxe'),
+        ('Suite', 'Suite'),
+    )
+
+    room_number = models.PositiveIntegerField()
+
+    room_type = models.CharField(
+        max_length=20,
+        choices=ROOM_TYPE_CHOICES,
+    )
+
+    capacity = models.PositiveIntegerField()
+
+    amenities = models.TextField()
+
+    price_per_night = models.DecimalField(
+        max_digits=8,
+        decimal_places=2
+    )
+
+    is_reserved = models.BooleanField(
+        default=False,
+    )
+
+    def __str__(self):
+        return f"Deluxe room with number {self.room_number} costs {self.price_per_night}$ per night!"
+
+
+class Character(models.Model):
+    CHOICE_NAME = (
+        ('Mage', 'Mage'),
+        ('Warrior', 'Warrior'),
+        ('Assassin', 'Assassin'),
+        ('Scout', 'Scout')
+    )
+    name = models.CharField(
+        max_length=100,
+    )
+
+    class_name = models.CharField(
+        max_length=20,
+        choices=CHOICE_NAME
+    )
+
+    level = models.PositiveIntegerField()
+
+    strength = models.PositiveIntegerField()
+
+    dexterity = models.PositiveIntegerField()
+
+    intelligence = models.PositiveIntegerField()
+
+    hit_points = models.PositiveIntegerField()
+
+    inventory = models.TextField()
+
