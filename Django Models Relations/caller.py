@@ -1,4 +1,6 @@
 import os
+from datetime import date, timedelta
+
 import django
 
 # Set up Django
@@ -7,7 +9,9 @@ django.setup()
 
 # Import your models here
 
-from main_app.models import Author, Book, Artist, Song
+from main_app.models import Author, Book, Artist, Song, Product, Review, DrivingLicense, Driver, Owner, Registration, \
+    Car
+
 
 # Create queries within functions
 
@@ -50,6 +54,66 @@ def remove_song_from_artist(artist_name, song_title):
     song = Song.objects.get(title=song_title)
 
     artist.songs.remove(song)
+
+
+def calculate_average_rating_for_product_by_name(product_name):
+    product = Product.objects.get(name=product_name)
+    reviews = product.reviews.all()
+
+    sum_ratings = sum(r.rating for r in reviews)
+    average_rating = sum_ratings / len(reviews)
+
+    return average_rating
+
+
+def get_reviews_with_high_ratings(threshold):
+    return Review.objects.filter(rating__gte=threshold)
+
+
+def get_products_with_no_reviews():
+    return Product.objects.filter(reviews__isnull=True).order_by('-name')
+
+
+def delete_products_without_reviews():
+    Product.objects.filter(reviews__isnull=True).delete()
+
+
+def calculate_licenses_expiration_dates():
+    licenses = DrivingLicense.objects.order_by('-license_number')
+
+    return '\n'.join(str(l) for l in licenses)
+
+
+def get_drivers_with_expired_licenses(due_date: date):
+    expiration_cutoff_date = due_date - timedelta(days=365)
+
+    return Driver.objects.filter(drivinglicense__issue_date__gt=expiration_cutoff_date)
+
+
+def register_car_by_owner(owner: Owner):
+    registration = Registration.objects.filter(car__isnull=True).first()
+    car = Car.objects.filter(registration__isnull=True).first()
+
+    car.owner = owner
+    car.registration = registration
+    car.save()
+
+    registration.registration_date = date.today()
+    registration.car = car
+    registration.save()
+
+    return f"Successfully registered {car.model} to {owner.name} with registration number {registration.registration_number}."
+
+
+
+
+
+
+
+
+
+
+
 
 
 
