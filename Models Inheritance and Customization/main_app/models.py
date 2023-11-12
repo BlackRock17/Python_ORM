@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -156,9 +157,111 @@ class Message(models.Model):
         return new_message
 
 
+class StudentIDField(models.PositiveIntegerField):
+    def to_python(self, value):
+        try:
+            return int(value)
+        except ValueError:
+            pass
 
 
+class Student(models.Model):
+    name = models.CharField(
+        max_length=100,
+    )
 
+    student_id = StudentIDField()
+
+
+class MaskedCreditCardField(models.CharField):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = 20
+        super().__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        if not isinstance(value, str):
+            raise ValidationError('The card number must be a string')
+
+        if not value.isdigit():
+            raise ValidationError('The card number must contain only digits')
+
+        if len(value) != 16:
+            raise ValidationError('The card number must be exactly 16 characters long')
+
+        return f"****-****-****-{value[-4:]}"
+
+
+class CreditCard(models.Model):
+    card_owner = models.CharField(
+        max_length=100,
+    )
+
+    card_number = MaskedCreditCardField()
+
+
+class Hotel(models.Model):
+    name = models.CharField(
+        max_length=100,
+    )
+
+    address = models.CharField(
+        max_length=200,
+    )
+
+
+class Room(models.Model):
+    hotel = models.ForeignKey(
+        to=Hotel,
+        on_delete=models.CASCADE,
+    )
+
+    number = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+
+    capacity = models.PositiveIntegerField()
+
+    total_guests = models.PositiveIntegerField()
+
+    price_per_night = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+
+    def clean(self):
+        if self.total_guests > self.capacity:
+            raise ValidationError('Total guests are more than the capacity of the room')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+        return f'Room {self.number} created successfully'
+
+
+class BaseReservation(models.Model):
+    room = models.ForeignKey(
+        to=Room,
+        on_delete=models.CASCADE,
+    )
+
+    start_date = models.DateField()
+
+    end_date = models.DateField()
+
+    class Meta:
+        abstract = True
+
+    def reservation_period(self):
+        return (self.end_date - self.start_date).days
+
+    def calculate_total_cost(self):
+        return round(self.room.price_per_night * self.reservation_period(), 2)
+
+
+class RegularReservation(BaseReservation):
+    pass
 
 
 

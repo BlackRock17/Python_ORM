@@ -8,7 +8,9 @@ django.setup()
 
 # Import your models here
 
-from main_app.models import Mage, Necromancer, Message, UserProfile
+from main_app.models import Mage, Necromancer, Message, UserProfile, Student, CreditCard
+
+
 
 
 
