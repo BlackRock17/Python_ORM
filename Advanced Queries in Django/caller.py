@@ -8,7 +8,8 @@ django.setup()
 
 # Import your models
 
-from main_app.models import RealEstateListing, VideoGame
+from main_app.models import RealEstateListing, VideoGame, BillingInfo, Invoice, Programmer, Project, Technology
 
 # Create and check models
+
 
