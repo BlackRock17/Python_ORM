@@ -1,4 +1,6 @@
 import os
+from datetime import date
+
 import django
 
 
@@ -8,7 +10,7 @@ django.setup()
 
 # Import your models
 
-from main_app.models import RealEstateListing, VideoGame, BillingInfo, Invoice, Programmer, Project, Technology
+from main_app.models import RealEstateListing, VideoGame, BillingInfo, Invoice, Programmer, Project, Technology, Task
 
 # Create and check models
 
