@@ -1,6 +1,6 @@
 import os
 import django
-from django.db.models import Q, Count, Avg
+from django.db.models import Q, Count, Avg, F
 
 # Set up Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "orm_skeleton.settings")
@@ -94,4 +94,30 @@ def get_actors_by_movies_count():
         result.append(f"{actor.full_name}, participated in {actor.num_movies} movies")
 
     return '\n'.join(result)
+
+
+def get_top_rated_awarded_movie():
+    top_movie = Movie.objects.filter(is_awarded=True).order_by('-rating', 'title').first()
+
+    if top_movie is None:
+        return ''
+
+    starring_actor = top_movie.starring_actor.full_name if top_movie.starring_actor else 'N/A'
+
+    participated_actors = top_movie.actors.all().order_by('full_name')
+
+    cast = ', '.join(actor.full_name for actor in participated_actors)
+
+    return (f"Top rated awarded movie: {top_movie.title},"
+            f" rating: {top_movie.rating:.1f}."
+            f" Starring actor: {starring_actor}. Cast: {cast}.")
+
+
+def increase_rating():
+    num_movies = Movie.objects.filter(is_classic=True, rating__lt=10.0).update(rating=F('rating') + 0.1)
+
+    if num_movies == 0:
+        return "No ratings increased."
+    else:
+        return f"Rating increased for {num_movies} movies."
 
