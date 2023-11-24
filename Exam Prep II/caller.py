@@ -1,6 +1,6 @@
 import os
 import django
-from django.db.models import Q, Count
+from django.db.models import Q, Count, F
 
 # Set up Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "orm_skeleton.settings")
@@ -68,4 +68,43 @@ def get_last_sold_products():
     return ''
 
 
-print(get_last_sold_products())
+def get_top_products():
+    products = Product.objects.prefetch_related(
+        'order_products__products'
+    ).annotate(
+        sold_products=Count('order_products')
+    ).filter(
+        sold_products__gt=0
+    ).order_by(
+        '-sold_products',
+        'name'
+    )[:5]
+
+    result = 'Top products: \n'
+
+    if products is None:
+        return ''
+
+    for p in products:
+        result += f'{p.name}, sold {p.sold_products} times' + '\n'
+
+    return result
+
+
+def apply_discounts():
+    orders = Order.objects.annotate(
+        num_products=Count('products')
+    ).filter(
+        num_products__gt=2, is_completed=False
+    ).update(
+        total_price=F('total_price') * 0.9
+    )
+    return f'Discount applied to {orders} orders.'
+
+
+def abv():
+    a = Order.objects.prefetch_related('products').all()
+
+    return a.filter(products__description='Hot', is_completed=False).update(total_price=1)
+
+print(abv())
