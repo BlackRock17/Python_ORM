@@ -1,5 +1,6 @@
 import os
 import django
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q, Count, F
 
 # Set up Django
@@ -80,16 +81,10 @@ def get_top_products():
         'name'
     )[:5]
 
-    result = 'Top products: \n'
-
-    if products is None:
-        return ''
-
-    for p in products:
-        result += f'{p.name}, sold {p.sold_products} times' + '\n'
-
-    return result
-
+    if products:
+        products_str = '\n'.join(f'{p.name}, sold {p.sold_products} times' for p in products)
+        return f'Top products:\n{products_str}'
+    return ''
 
 def apply_discounts():
     orders = Order.objects.annotate(
@@ -102,9 +97,32 @@ def apply_discounts():
     return f'Discount applied to {orders} orders.'
 
 
-def abv():
-    a = Order.objects.prefetch_related('products').all()
+def complete_order():
+    try:
+        order = Order.objects.prefetch_related(
+            'products'
+        ).filter(
+            is_completed=False
+        ).latest(
+            '-creation_date'
+        )
+    except ObjectDoesNotExist:
+        return ''
 
-    return a.filter(products__description='Hot', is_completed=False).update(total_price=1)
+    products = order.products.all()
 
-print(abv())
+    for product in products:
+        if product.is_available:
+            product.in_stock -= 1
+
+        if product.in_stock == 0:
+            product.is_available = False
+        product.save()
+
+    order.is_completed = True
+    order.save()
+
+    return "Order has been completed!"
+
+print(get_top_products())
+
